@@ -31,6 +31,10 @@
             justify-content: space-between;
             align-items: center;
         }
+        header a {
+            color: white;
+            text-decoration: none;
+        }
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -116,6 +120,8 @@
             max-width: 500px;
             border-radius: 12px;
             position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .close {
             position: absolute;
@@ -157,13 +163,6 @@
             font-size: 1.1rem;
             margin-top: 1rem;
         }
-        .track-link {
-            text-align: center;
-            margin-top: 1rem;
-        }
-        .track-link a {
-            color: #667eea;
-        }
         .info-banner {
             text-align: center;
             padding: 0.5rem;
@@ -185,7 +184,7 @@
         <div class="container">
             <h1>🛍️ FortunaAdiuvat Market</h1>
             <div>
-                <a href="track.html" style="color:white; text-decoration:none;">🔍 Lacak Pesanan</a>
+                <a href="track.html">🔍 Lacak Pesanan</a>
             </div>
         </div>
     </header>
@@ -204,7 +203,6 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2>Checkout</h2>
-            <div id="checkoutProduct"></div>
             <form id="checkoutForm">
                 <input type="hidden" id="productId">
                 <input type="hidden" id="productName">
@@ -241,8 +239,8 @@
     </div>
 
     <script>
-        const API_URL = 'https://payment-worker.xxxx.workers.dev'; // GANTI DENGAN URL WORKER ANDA
-        const GITHUB_PRODUCTS_URL = 'https://raw.githubusercontent.com/YOUR-USERNAME/frontend-akses/main/data/products.json'; // GANTI
+        const API_URL = 'https://payment-worker.namecheapel.workers.dev';
+        const GITHUB_PRODUCTS_URL = 'https://raw.githubusercontent.com/namecheapel-boop/frontend-akses/main/data/products.json';
         
         let products = [];
 
@@ -348,7 +346,7 @@
                 
                 if (result.success) {
                     const trackingCode = result.transaction.tracking_code;
-                    alert(`✅ Transaksi berhasil!\n\nOrder ID: ${result.transaction.order_id}\nKODE TRACKING: ${trackingCode}\nTotal: Rp ${result.transaction.amount.toLocaleString('id-ID')}\n\n📌 SIMPAN KODE TRACKING ANDA!\nGunakan untuk cek status pesanan.`);
+                    alert(`✅ Transaksi berhasil!\n\nOrder ID: ${result.transaction.order_id}\nKODE TRACKING: ${trackingCode}\nTotal: Rp ${result.transaction.amount.toLocaleString('id-ID')}\n\n📌 SIMPAN KODE TRACKING ANDA!`);
                     
                     closeModal();
                     window.location.href = `track.html?code=${trackingCode}`;
