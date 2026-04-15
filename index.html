@@ -25,6 +25,7 @@
             padding: 1rem 0;
             position: sticky;
             top: 0;
+            z-index: 100;
         }
         header .container {
             display: flex;
@@ -34,6 +35,13 @@
         header a {
             color: white;
             text-decoration: none;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        header a:hover {
+            background: rgba(255,255,255,0.3);
         }
         .products-grid {
             display: grid;
@@ -46,10 +54,11 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
         }
         .product-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         }
         .product-image {
             height: 200px;
@@ -66,6 +75,7 @@
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 0.5rem;
+            color: #333;
         }
         .product-price {
             color: #667eea;
@@ -77,6 +87,7 @@
             color: #666;
             font-size: 0.9rem;
             margin-bottom: 1rem;
+            line-height: 1.4;
         }
         .product-stock {
             font-size: 0.8rem;
@@ -92,6 +103,10 @@
             cursor: pointer;
             width: 100%;
             font-size: 1rem;
+            transition: opacity 0.3s;
+        }
+        .btn-buy:hover {
+            opacity: 0.9;
         }
         .btn-buy:disabled {
             opacity: 0.5;
@@ -99,8 +114,9 @@
         }
         .loading {
             text-align: center;
-            padding: 2rem;
+            padding: 3rem;
             font-size: 1.2rem;
+            color: #666;
         }
         .modal {
             display: none;
@@ -111,6 +127,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
+            overflow-y: auto;
         }
         .modal-content {
             background: white;
@@ -120,40 +137,61 @@
             max-width: 500px;
             border-radius: 12px;
             position: relative;
-            max-height: 80vh;
+            max-height: 85vh;
             overflow-y: auto;
         }
         .close {
             position: absolute;
             right: 20px;
-            top: 10px;
+            top: 15px;
             font-size: 28px;
             cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+        .close:hover {
+            color: #333;
+        }
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+            color: #333;
+            text-align: center;
         }
         .modal-content label {
             display: block;
             margin-top: 1rem;
             margin-bottom: 0.5rem;
             font-weight: bold;
+            color: #555;
         }
-        .modal-content input, .modal-content select, .modal-content textarea {
+        .modal-content input,
+        .modal-content select,
+        .modal-content textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 1rem;
+            font-family: inherit;
+        }
+        .modal-content input:focus,
+        .modal-content select:focus,
+        .modal-content textarea:focus {
+            outline: none;
+            border-color: #667eea;
         }
         .total-price {
-            margin: 1rem 0;
+            margin: 1.5rem 0;
             padding: 1rem;
-            background: #f0f0f0;
+            background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
             border-radius: 8px;
             font-size: 1.2rem;
             font-weight: bold;
             text-align: center;
+            color: #667eea;
         }
         .btn-checkout {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
             color: white;
             border: none;
             padding: 12px;
@@ -162,19 +200,44 @@
             width: 100%;
             font-size: 1.1rem;
             margin-top: 1rem;
+            transition: opacity 0.3s;
+        }
+        .btn-checkout:hover {
+            opacity: 0.9;
         }
         .info-banner {
             text-align: center;
-            padding: 0.5rem;
+            padding: 0.75rem;
             background: #e8e8e8;
             border-radius: 8px;
             margin: 1rem 0;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            color: #555;
+        }
+        .info-banner a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .bank-details {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+            border-left: 4px solid #667eea;
+            line-height: 1.6;
+        }
+        .bank-details p {
+            margin: 5px 0;
         }
         @media (max-width: 768px) {
             .products-grid {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
                 gap: 1rem;
+            }
+            .modal-content {
+                margin: 20px auto;
+                padding: 1.5rem;
             }
         }
     </style>
@@ -192,58 +255,98 @@
     <main class="container">
         <div class="info-banner">
             📦 Data produk diperbarui dari GitHub | 
-            <a href="#" onclick="refreshProducts()" style="color:#667eea;">Refresh manual</a>
+            <a href="#" onclick="refreshProducts()">Refresh manual</a>
         </div>
         <div id="productsGrid" class="products-grid">
             <div class="loading">📦 Loading products...</div>
         </div>
     </main>
 
+    <!-- Modal Checkout -->
     <div id="checkoutModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Checkout</h2>
+            <h2>🛒 Checkout</h2>
             <form id="checkoutForm">
                 <input type="hidden" id="productId">
                 <input type="hidden" id="productName">
                 <input type="hidden" id="productPrice">
                 
-                <label>Nama Lengkap:</label>
-                <input type="text" id="customerName" required>
+                <label>👤 Nama Lengkap:</label>
+                <input type="text" id="customerName" required placeholder="Masukkan nama lengkap Anda">
                 
-                <label>Email:</label>
-                <input type="email" id="customerEmail" required>
+                <label>📧 Email:</label>
+                <input type="email" id="customerEmail" required placeholder="contoh@email.com">
                 
-                <label>No. Telepon:</label>
-                <input type="tel" id="customerPhone" required>
+                <label>📞 No. Telepon:</label>
+                <input type="tel" id="customerPhone" required placeholder="0812xxxxxx">
                 
-                <label>Alamat Pengiriman:</label>
-                <textarea id="shippingAddress" required rows="3"></textarea>
+                <label>🏠 Alamat Pengiriman:</label>
+                <textarea id="shippingAddress" required rows="3" placeholder="Jl. Contoh No. 123, RT/RW, Kelurahan, Kecamatan, Kota, Kode Pos"></textarea>
                 
-                <label>Metode Pembayaran:</label>
-                <select id="paymentMethod">
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="qris">QRIS</option>
+                <label>🏦 Metode Pembayaran:</label>
+                <select id="paymentMethod" onchange="updateBankDetails()">
+                    <option value="BCA">🏦 BCA - Transfer Bank</option>
+                    <option value="Mandiri">🏦 Mandiri - Transfer Bank</option>
+                    <option value="BRI">🏦 BRI - Transfer Bank</option>
                 </select>
                 
-                <label>Jumlah:</label>
-                <input type="number" id="quantity" value="1" min="1">
-                
-                <div class="total-price">
-                    Total: Rp <span id="totalAmount">0</span>
+                <div id="bankDetails" class="bank-details">
+                    <!-- Bank details akan muncul di sini -->
                 </div>
                 
-                <button type="submit" class="btn-checkout">Bayar Sekarang</button>
+                <div class="total-price">
+                    💰 Total: Rp <span id="totalAmount">0</span>
+                </div>
+                
+                <button type="submit" class="btn-checkout">✅ Bayar Sekarang</button>
             </form>
         </div>
     </div>
 
     <script>
+        // Konfigurasi
         const API_URL = 'https://payment-worker.namecheapel.workers.dev';
         const GITHUB_PRODUCTS_URL = 'https://raw.githubusercontent.com/namecheapel-boop/frontend-akses/main/data/products.json';
         
         let products = [];
 
+        // Update detail bank berdasarkan pilihan metode
+        function updateBankDetails() {
+            const method = document.getElementById('paymentMethod').value;
+            const detailsDiv = document.getElementById('bankDetails');
+            
+            const bankDetails = {
+                'BCA': `
+                    <p>🏦 <strong>BANK BCA</strong></p>
+                    <p>📋 Nomor Rekening: <strong>1234567890</strong></p>
+                    <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
+                    <p>📍 Cabang: Jakarta Pusat</p>
+                    <hr style="margin: 10px 0;">
+                    <p style="font-size: 12px; color: #666;">* Setelah transfer, pesanan akan diproses dalam 1x24 jam</p>
+                `,
+                'Mandiri': `
+                    <p>🏦 <strong>BANK MANDIRI</strong></p>
+                    <p>📋 Nomor Rekening: <strong>9876543210</strong></p>
+                    <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
+                    <p>📍 Cabang: Jakarta Selatan</p>
+                    <hr style="margin: 10px 0;">
+                    <p style="font-size: 12px; color: #666;">* Setelah transfer, pesanan akan diproses dalam 1x24 jam</p>
+                `,
+                'BRI': `
+                    <p>🏦 <strong>BANK BRI</strong></p>
+                    <p>📋 Nomor Rekening: <strong>5555555555</strong></p>
+                    <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
+                    <p>📍 Cabang: Jakarta Barat</p>
+                    <hr style="margin: 10px 0;">
+                    <p style="font-size: 12px; color: #666;">* Setelah transfer, pesanan akan diproses dalam 1x24 jam</p>
+                `
+            };
+            
+            detailsDiv.innerHTML = bankDetails[method] || bankDetails['BCA'];
+        }
+
+        // Load produk dari GitHub
         async function loadProducts() {
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = '<div class="loading">📦 Loading products...</div>';
@@ -255,85 +358,93 @@
                 products = data.products || [];
                 
                 if (products.length === 0) {
-                    grid.innerHTML = '<div class="loading">⚠️ Belum ada produk</div>';
+                    grid.innerHTML = '<div class="loading">⚠️ Belum ada produk. Silakan tambahkan produk di file products.json</div>';
                     return;
                 }
                 
                 displayProducts(products);
             } catch (error) {
-                console.error(error);
-                grid.innerHTML = '<div class="loading">❌ Gagal memuat produk</div>';
+                console.error('Error loading products:', error);
+                grid.innerHTML = '<div class="loading">❌ Gagal memuat produk. Pastikan file products.json tersedia di GitHub.</div>';
             }
         }
 
+        // Tampilkan produk di halaman
         function displayProducts(products) {
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = products.map(product => `
                 <div class="product-card">
-                    <div class="product-image">📦</div>
+                    <div class="product-image">${product.image_url ? `<img src="${product.image_url}" style="width:100%; height:100%; object-fit:cover;">` : '📦'}</div>
                     <div class="product-info">
                         <div class="product-name">${escapeHtml(product.name)}</div>
                         <div class="product-price">Rp ${(product.price || 0).toLocaleString('id-ID')}</div>
-                        <div class="product-description">${escapeHtml(product.description || '-')}</div>
-                        <div class="product-stock">Stok: ${product.stock || 0}</div>
+                        <div class="product-description">${escapeHtml(product.description || 'Deskripsi produk')}</div>
+                        <div class="product-stock">📦 Stok: ${product.stock || 0}</div>
                         <button class="btn-buy" onclick="openCheckout(${product.id}, '${escapeHtml(product.name)}', ${product.price})"
                             ${(product.stock || 0) <= 0 ? 'disabled' : ''}>
-                            ${(product.stock || 0) <= 0 ? 'Stok Habis' : 'Beli'}
+                            ${(product.stock || 0) <= 0 ? 'Stok Habis' : '🛒 Beli'}
                         </button>
                     </div>
                 </div>
             `).join('');
         }
 
+        // Escape HTML untuk keamanan
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
+        // Buka modal checkout
         function openCheckout(productId, productName, productPrice) {
             document.getElementById('productId').value = productId;
             document.getElementById('productName').value = productName;
             document.getElementById('productPrice').value = productPrice;
             document.getElementById('totalAmount').innerText = productPrice.toLocaleString('id-ID');
             document.getElementById('checkoutModal').style.display = 'block';
-            
-            document.getElementById('quantity').onchange = () => {
-                const qty = parseInt(document.getElementById('quantity').value) || 1;
-                const total = productPrice * qty;
-                document.getElementById('totalAmount').innerText = total.toLocaleString('id-ID');
-            };
+            updateBankDetails();
         }
 
+        // Tutup modal
         function closeModal() {
             document.getElementById('checkoutModal').style.display = 'none';
             document.getElementById('checkoutForm').reset();
         }
 
+        // Proses checkout
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const productId = document.getElementById('productId').value;
             const productName = document.getElementById('productName').value;
             const productPrice = parseInt(document.getElementById('productPrice').value);
-            const quantity = parseInt(document.getElementById('quantity').value);
-            const totalAmount = productPrice * quantity;
             
             const transactionData = {
                 product_id: parseInt(productId),
                 product_name: productName,
-                quantity: quantity,
+                quantity: 1,
                 customer_name: document.getElementById('customerName').value,
                 customer_email: document.getElementById('customerEmail').value,
                 customer_phone: document.getElementById('customerPhone').value,
                 shipping_address: document.getElementById('shippingAddress').value,
-                amount: totalAmount,
+                amount: productPrice,
                 payment_method: document.getElementById('paymentMethod').value
             };
+            
+            // Validasi
+            if (!transactionData.customer_name || !transactionData.shipping_address) {
+                alert('Mohon isi semua data yang diperlukan!');
+                return;
+            }
+            
+            const submitBtn = document.querySelector('.btn-checkout');
+            submitBtn.textContent = '⏳ Memproses...';
+            submitBtn.disabled = true;
             
             try {
                 const response = await fetch(`${API_URL}/api/create-transaction`, {
@@ -346,23 +457,39 @@
                 
                 if (result.success) {
                     const trackingCode = result.transaction.tracking_code;
-                    alert(`✅ Transaksi berhasil!\n\nOrder ID: ${result.transaction.order_id}\nKODE TRACKING: ${trackingCode}\nTotal: Rp ${result.transaction.amount.toLocaleString('id-ID')}\n\n📌 SIMPAN KODE TRACKING ANDA!`);
+                    const paymentMethod = document.getElementById('paymentMethod').value;
+                    const bankNames = { 'BCA': 'BCA', 'Mandiri': 'Mandiri', 'BRI': 'BRI' };
+                    
+                    alert(`✅ Transaksi Berhasil!\n\n` +
+                        `📌 Order ID: ${result.transaction.order_id}\n` +
+                        `🔑 Kode Tracking: ${trackingCode}\n` +
+                        `💰 Total: Rp ${result.transaction.amount.toLocaleString('id-ID')}\n\n` +
+                        `🏦 Metode Pembayaran: ${bankNames[paymentMethod] || paymentMethod}\n\n` +
+                        `📌 SIMPAN KODE TRACKING ANDA!\n` +
+                        `Gunakan untuk cek status pesanan.\n\n` +
+                        `💳 Silakan transfer sesuai detail bank di atas.`);
                     
                     closeModal();
                     window.location.href = `track.html?code=${trackingCode}`;
                 } else {
                     alert('Gagal: ' + (result.error || 'Unknown error'));
+                    submitBtn.textContent = '✅ Bayar Sekarang';
+                    submitBtn.disabled = false;
                 }
             } catch (error) {
-                console.error(error);
+                console.error('Error:', error);
                 alert('Terjadi kesalahan. Silakan coba lagi.');
+                submitBtn.textContent = '✅ Bayar Sekarang';
+                submitBtn.disabled = false;
             }
         });
 
+        // Refresh produk
         function refreshProducts() {
             loadProducts();
         }
 
+        // Load produk saat halaman dimuat
         loadProducts();
     </script>
 </body>
