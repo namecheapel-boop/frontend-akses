@@ -1,0 +1,31 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Kaos Premium",
+      "price": 150000,
+      "description": "Kaos bahan cotton combed 30s, nyaman dipakai",
+      "stock": 50,
+      "image_url": "",
+      "category": "Pakaian"
+    },
+    {
+      "id": 2,
+      "name": "Jaket Hoodie",
+      "price": 350000,
+      "description": "Jaket hoodie tebal, cocok untuk cuaca dingin",
+      "stock": 25,
+      "image_url": "",
+      "category": "Pakaian"
+    },
+    {
+      "id": 3,
+      "name": "Tas Ransel",
+      "price": 275000,
+      "description": "Tas ransel waterproof, banyak kantong",
+      "stock": 30,
+      "image_url": "",
+      "category": "Aksesoris"
+    }
+  ]
+}
