@@ -4,7 +4,7 @@
       "id": 1,
       "name": "Kaos Premium",
       "price": 150000,
-      "description": "Kaos bahan cotton combed 30s, nyaman dipakai",
+      "description": "Kaos bahan cotton combed 30s, nyaman dipakai sehari-hari. Tersedia warna hitam, putih, navy.",
       "stock": 50,
       "image_url": "",
       "category": "Pakaian"
@@ -13,7 +13,7 @@
       "id": 2,
       "name": "Jaket Hoodie",
       "price": 350000,
-      "description": "Jaket hoodie tebal, cocok untuk cuaca dingin",
+      "description": "Jaket hoodie tebal dengan bahan fleece, cocok untuk cuaca dingin. Ada kantong depan.",
       "stock": 25,
       "image_url": "",
       "category": "Pakaian"
@@ -22,8 +22,26 @@
       "id": 3,
       "name": "Tas Ransel",
       "price": 275000,
-      "description": "Tas ransel waterproof, banyak kantong",
+      "description": "Tas ransel waterproof dengan banyak kantong. Cocok untuk traveling atau sekolah.",
       "stock": 30,
+      "image_url": "",
+      "category": "Aksesoris"
+    },
+    {
+      "id": 4,
+      "name": "Sepatu Sneakers",
+      "price": 450000,
+      "description": "Sepatu sneakers casual dengan sol empuk. Ukuran 39-44 tersedia.",
+      "stock": 15,
+      "image_url": "",
+      "category": "Sepatu"
+    },
+    {
+      "id": 5,
+      "name": "Topi Baseball",
+      "price": 85000,
+      "description": "Topi baseball bahan denim, adjustable size, cocok untuk daily use.",
+      "stock": 40,
       "image_url": "",
       "category": "Aksesoris"
     }
