@@ -221,4 +221,98 @@
                     <h3>📋 Detail Pesanan</h3>
                     
                     <div class="detail-row">
-                        <div class="detail-label">
+                        <div class="detail-label">Kode Tracking</div>
+                        <div class="detail-value"><strong>${tr.tracking_code}</strong></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Order ID</div>
+                        <div class="detail-value">${tr.order_id}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">
+                            <span class="status-badge status-${tr.status}">
+                                ${statusText[tr.status] || tr.status}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Pembayaran</div>
+                        <div class="detail-value">${tr.payment_status === 'paid' ? '✅ Lunas' : '⏳ Belum Dibayar'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Produk</div>
+                        <div class="detail-value">${tr.product_name} x ${tr.quantity}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Total</div>
+                        <div class="detail-value">Rp ${(tr.amount || 0).toLocaleString('id-ID')}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Nama</div>
+                        <div class="detail-value">${tr.customer_name}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Alamat</div>
+                        <div class="detail-value">${tr.shipping_address || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Tanggal Order</div>
+                        <div class="detail-value">${new Date(tr.created_at * 1000).toLocaleString('id-ID')}</div>
+                    </div>
+                    
+                    ${tr.status === 'pending' ? `
+                        <div style="text-align:center; margin-top:1rem;">
+                            <button class="btn-cancel" onclick="cancelOrder('${tr.tracking_code}')">
+                                ❌ Batalkan Pesanan
+                            </button>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="share-buttons">
+                        <button class="share-btn whatsapp" onclick="shareToWA('${tr.tracking_code}')">
+                            📱 Bagikan ke WhatsApp
+                        </button>
+                        <button class="share-btn copy" onclick="copyTrackingLink('${tr.tracking_code}')">
+                            🔗 Salin Link Tracking
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('result').innerHTML = html;
+        }
+        
+        async function cancelOrder(trackingCode) {
+            if (!confirm('Yakin ingin membatalkan pesanan ini?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/api/track/${trackingCode}/cancel`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Pesanan berhasil dibatalkan');
+                    trackOrder();
+                } else {
+                    alert(data.error || 'Gagal membatalkan');
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan');
+            }
+        }
+        
+        function copyTrackingLink(code) {
+            const link = `${window.location.origin}${window.location.pathname}?code=${code}`;
+            navigator.clipboard.writeText(link);
+            alert('Link tracking disalin!');
+        }
+        
+        function shareToWA(code) {
+            const link = `${window.location.origin}${window.location.pathname}?code=${code}`;
+            window.open(`https://wa.me/?text=Halo, status pesanan Anda: ${link}`, '_blank');
+        }
+    </script>
+</body>
+</html>
