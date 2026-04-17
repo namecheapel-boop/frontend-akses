@@ -386,51 +386,54 @@
 
     // 🚀 FIX UTAMA ADA DI SINI
     document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        const productName = document.getElementById('productName').value;
-        const productPrice = parseInt(document.getElementById('productPrice').value);
+    const productId = document.getElementById('productId').value;
+    const productName = document.getElementById('productName').value;
+    const productPrice = parseInt(document.getElementById('productPrice').value);
 
-        const transactionData = {
-            produk: productName,
-            nama: document.getElementById('customerName').value,
-            method: document.getElementById('paymentMethod').value,
-            nominal: productPrice
-        };
+    const transactionData = {
+        product_id: parseInt(productId),
+        product_name: productName,
+        customer_name: document.getElementById('customerName').value,
+        shipping_address: document.getElementById('shippingAddress').value,
+        amount: productPrice,
+        payment_method: document.getElementById('paymentMethod').value
+    };
 
-        const btn = document.querySelector('.btn-checkout');
-        btn.innerText = '⏳ Memproses...';
-        btn.disabled = true;
+    const btn = document.querySelector('.btn-checkout');
+    btn.innerText = '⏳ Memproses...';
+    btn.disabled = true;
 
-        try {
-            const res = await fetch(`${API_URL}/api/transaction`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(transactionData)
-            });
+    try {
+        const res = await fetch(`${API_URL}/api/create-transaction`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(transactionData)
+        });
 
-            const data = await res.json();
+        const data = await res.json();
 
-            if (data.order_id) {
-                alert(
-                    "✅ Transaksi Berhasil!\n\n" +
-                    "Order ID: " + data.order_id +
-                    "\nTotal: " + data.total +
-                    "\nKode Unik: " + data.kode +
-                    "\n\nSilakan transfer sesuai nominal."
-                );
-                closeModal();
-            } else {
-                alert("❌ Gagal transaksi");
-            }
-
-        } catch (err) {
-            alert("❌ Server error");
+        if (data.success) {
+            alert(
+                "✅ Transaksi Berhasil!\n\n" +
+                "Order ID: " + data.transaction.order_id +
+                "\nTracking: " + data.transaction.tracking_code +
+                "\nTotal: " + data.transaction.amount
+            );
+            closeModal();
+        } else {
+            alert("❌ Gagal: " + data.error);
         }
 
-        btn.innerText = '✅ Bayar Sekarang';
-        btn.disabled = false;
-    });
+    } catch (err) {
+        console.error(err);
+        alert("❌ Server error");
+    }
+
+    btn.innerText = '✅ Bayar Sekarang';
+    btn.disabled = false;
+});
 
     function refreshProducts() {
         loadProducts();
