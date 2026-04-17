@@ -305,192 +305,138 @@
     </div>
 
     <script>
-        // Konfigurasi
-        const API_URL = 'https://backend-worker.namecheapel.workers.dev/';
-        const GITHUB_PRODUCTS_URL = 'https://raw.githubusercontent.com/namecheapel-boop/frontend-akses/main/data/products.json';
+    // Konfigurasi
+    const API_URL = 'https://backend-worker.namecheapel.workers.dev';
+    const GITHUB_PRODUCTS_URL = 'https://raw.githubusercontent.com/namecheapel-boop/frontend-akses/main/data/products.json';
+    
+    let products = [];
+
+    function updateBankDetails() {
+        const method = document.getElementById('paymentMethod').value;
+        const detailsDiv = document.getElementById('bankDetails');
         
-        let products = [];
+        const bankDetails = {
+            'BCA': `
+                <p>🏦 <strong>BANK BCA</strong></p>
+                <p>📋 Nomor Rekening: <strong>1234567890</strong></p>
+                <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
+            `,
+            'Mandiri': `
+                <p>🏦 <strong>BANK MANDIRI</strong></p>
+                <p>📋 Nomor Rekening: <strong>9876543210</strong></p>
+                <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
+            `,
+            'BRI': `
+                <p>🏦 <strong>BANK BRI</strong></p>
+                <p>📋 Nomor Rekening: <strong>5555555555</strong></p>
+                <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
+            `
+        };
+        
+        detailsDiv.innerHTML = bankDetails[method] || bankDetails['BCA'];
+    }
 
-        // Update detail bank berdasarkan pilihan metode
-        function updateBankDetails() {
-            const method = document.getElementById('paymentMethod').value;
-            const detailsDiv = document.getElementById('bankDetails');
-            
-            const bankDetails = {
-                'BCA': `
-                    <p>🏦 <strong>BANK BCA</strong></p>
-                    <p>📋 Nomor Rekening: <strong>1234567890</strong></p>
-                    <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
-                    <p>📍 Cabang: Jakarta Pusat</p>
-                    <hr style="margin: 10px 0;">
-                    <p style="font-size: 12px; color: #666;">* Setelah transfer, pesanan akan diproses dalam 1x24 jam</p>
-                `,
-                'Mandiri': `
-                    <p>🏦 <strong>BANK MANDIRI</strong></p>
-                    <p>📋 Nomor Rekening: <strong>9876543210</strong></p>
-                    <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
-                    <p>📍 Cabang: Jakarta Selatan</p>
-                    <hr style="margin: 10px 0;">
-                    <p style="font-size: 12px; color: #666;">* Setelah transfer, pesanan akan diproses dalam 1x24 jam</p>
-                `,
-                'BRI': `
-                    <p>🏦 <strong>BANK BRI</strong></p>
-                    <p>📋 Nomor Rekening: <strong>5555555555</strong></p>
-                    <p>👤 Atas Nama: <strong>FortunaAdiuvat</strong></p>
-                    <p>📍 Cabang: Jakarta Barat</p>
-                    <hr style="margin: 10px 0;">
-                    <p style="font-size: 12px; color: #666;">* Setelah transfer, pesanan akan diproses dalam 1x24 jam</p>
-                `
-            };
-            
-            detailsDiv.innerHTML = bankDetails[method] || bankDetails['BCA'];
+    async function loadProducts() {
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = '<div class="loading">📦 Loading products...</div>';
+        
+        try {
+            const response = await fetch(GITHUB_PRODUCTS_URL + '?t=' + Date.now());
+            const data = await response.json();
+            products = data.products || [];
+            displayProducts(products);
+        } catch (error) {
+            grid.innerHTML = '<div class="loading">❌ Gagal load produk</div>';
         }
+    }
 
-        // Load produk dari GitHub
-        async function loadProducts() {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '<div class="loading">📦 Loading products...</div>';
-            
-            try {
-                const response = await fetch(GITHUB_PRODUCTS_URL + '?t=' + Date.now());
-                if (!response.ok) throw new Error('Gagal load produk');
-                const data = await response.json();
-                products = data.products || [];
-                
-                if (products.length === 0) {
-                    grid.innerHTML = '<div class="loading">⚠️ Belum ada produk. Silakan tambahkan produk di file products.json</div>';
-                    return;
-                }
-                
-                displayProducts(products);
-            } catch (error) {
-                console.error('Error loading products:', error);
-                grid.innerHTML = '<div class="loading">❌ Gagal memuat produk. Pastikan file products.json tersedia di GitHub.</div>';
-            }
-        }
-
-        // Tampilkan produk di halaman
-        function displayProducts(products) {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = products.map(product => `
-                <div class="product-card">
-                    <div class="product-image">${product.image_url ? `<img src="${product.image_url}" style="width:100%; height:100%; object-fit:cover;">` : '📦'}</div>
-                    <div class="product-info">
-                        <div class="product-name">${escapeHtml(product.name)}</div>
-                        <div class="product-price">Rp ${(product.price || 0).toLocaleString('id-ID')}</div>
-                        <div class="product-description">${escapeHtml(product.description || 'Deskripsi produk')}</div>
-                        <div class="product-stock">📦 Stok: ${product.stock || 0}</div>
-                        <button class="btn-buy" onclick="openCheckout(${product.id}, '${escapeHtml(product.name)}', ${product.price})"
-                            ${(product.stock || 0) <= 0 ? 'disabled' : ''}>
-                            ${(product.stock || 0) <= 0 ? 'Stok Habis' : '🛒 Beli'}
-                        </button>
-                    </div>
+    function displayProducts(products) {
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = products.map(product => `
+            <div class="product-card">
+                <div class="product-image">📦</div>
+                <div class="product-info">
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">Rp ${product.price.toLocaleString('id-ID')}</div>
+                    <div class="product-description">${product.description || ''}</div>
+                    <div class="product-stock">📦 Stok: ${product.stock || 0}</div>
+                    <button class="btn-buy"
+                        onclick="openCheckout(${product.id}, '${product.name}', ${product.price})"
+                        ${(product.stock || 0) <= 0 ? 'disabled' : ''}>
+                        🛒 Beli
+                    </button>
                 </div>
-            `).join('');
-        }
+            </div>
+        `).join('');
+    }
 
-        // Escape HTML untuk keamanan
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
+    function openCheckout(productId, productName, productPrice) {
+        document.getElementById('productId').value = productId;
+        document.getElementById('productName').value = productName;
+        document.getElementById('productPrice').value = productPrice;
+        document.getElementById('totalAmount').innerText = productPrice.toLocaleString('id-ID');
+        document.getElementById('checkoutModal').style.display = 'block';
+        updateBankDetails();
+    }
 
-        // Buka modal checkout
-        function openCheckout(productId, productName, productPrice) {
-            document.getElementById('productId').value = productId;
-            document.getElementById('productName').value = productName;
-            document.getElementById('productPrice').value = productPrice;
-            document.getElementById('totalAmount').innerText = productPrice.toLocaleString('id-ID');
-            document.getElementById('checkoutModal').style.display = 'block';
-            updateBankDetails();
-        }
+    function closeModal() {
+        document.getElementById('checkoutModal').style.display = 'none';
+        document.getElementById('checkoutForm').reset();
+    }
 
-        // Tutup modal
-        function closeModal() {
-            document.getElementById('checkoutModal').style.display = 'none';
-            document.getElementById('checkoutForm').reset();
-        }
+    // 🚀 FIX UTAMA ADA DI SINI
+    document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-        // Proses checkout
-        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const productId = document.getElementById('productId').value;
-            const productName = document.getElementById('productName').value;
-            const productPrice = parseInt(document.getElementById('productPrice').value);
-            
-            const transactionData = {
-                product_id: parseInt(productId),
-                product_name: productName,
-                quantity: 1,
-                customer_name: document.getElementById('customerName').value,
-                customer_email: document.getElementById('customerEmail').value,
-                customer_phone: document.getElementById('customerPhone').value,
-                shipping_address: document.getElementById('shippingAddress').value,
-                amount: productPrice,
-                payment_method: document.getElementById('paymentMethod').value
-            };
-            
-            // Validasi
-            if (!transactionData.customer_name || !transactionData.shipping_address) {
-                alert('Mohon isi semua data yang diperlukan!');
-                return;
+        const productName = document.getElementById('productName').value;
+        const productPrice = parseInt(document.getElementById('productPrice').value);
+
+        const transactionData = {
+            produk: productName,
+            nama: document.getElementById('customerName').value,
+            method: document.getElementById('paymentMethod').value,
+            nominal: productPrice
+        };
+
+        const btn = document.querySelector('.btn-checkout');
+        btn.innerText = '⏳ Memproses...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/transaction`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(transactionData)
+            });
+
+            const data = await res.json();
+
+            if (data.order_id) {
+                alert(
+                    "✅ Transaksi Berhasil!\n\n" +
+                    "Order ID: " + data.order_id +
+                    "\nTotal: " + data.total +
+                    "\nKode Unik: " + data.kode +
+                    "\n\nSilakan transfer sesuai nominal."
+                );
+                closeModal();
+            } else {
+                alert("❌ Gagal transaksi");
             }
-            
-            const submitBtn = document.querySelector('.btn-checkout');
-            submitBtn.textContent = '⏳ Memproses...';
-            submitBtn.disabled = true;
-            
-            try {
-                const response = await fetch(`${API_URL}/api/create-transaction`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(transactionData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    const trackingCode = result.transaction.tracking_code;
-                    const paymentMethod = document.getElementById('paymentMethod').value;
-                    const bankNames = { 'BCA': 'BCA', 'Mandiri': 'Mandiri', 'BRI': 'BRI' };
-                    
-                    alert(`✅ Transaksi Berhasil!\n\n` +
-                        `📌 Order ID: ${result.transaction.order_id}\n` +
-                        `🔑 Kode Tracking: ${trackingCode}\n` +
-                        `💰 Total: Rp ${result.transaction.amount.toLocaleString('id-ID')}\n\n` +
-                        `🏦 Metode Pembayaran: ${bankNames[paymentMethod] || paymentMethod}\n\n` +
-                        `📌 SIMPAN KODE TRACKING ANDA!\n` +
-                        `Gunakan untuk cek status pesanan.\n\n` +
-                        `💳 Silakan transfer sesuai detail bank di atas.`);
-                    
-                    closeModal();
-                    window.location.href = `track.html?code=${trackingCode}`;
-                } else {
-                    alert('Gagal: ' + (result.error || 'Unknown error'));
-                    submitBtn.textContent = '✅ Bayar Sekarang';
-                    submitBtn.disabled = false;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan. Silakan coba lagi.');
-                submitBtn.textContent = '✅ Bayar Sekarang';
-                submitBtn.disabled = false;
-            }
-        });
 
-        // Refresh produk
-        function refreshProducts() {
-            loadProducts();
+        } catch (err) {
+            alert("❌ Server error");
         }
 
-        // Load produk saat halaman dimuat
+        btn.innerText = '✅ Bayar Sekarang';
+        btn.disabled = false;
+    });
+
+    function refreshProducts() {
         loadProducts();
-    </script>
+    }
+
+    loadProducts();
+</script>
 </body>
 </html>
