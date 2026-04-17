@@ -698,93 +698,87 @@ function showToast(message, type) {
 
 // Submit order ke Admin Panel
 async function submitOrder() {
-  // Validasi form
   const customerName = document.getElementById('customerName').value.trim();
   const customerEmail = document.getElementById('customerEmail').value.trim();
   const customerPhone = document.getElementById('customerPhone').value.trim();
   const shippingAddress = document.getElementById('shippingAddress').value.trim();
   const paymentMethod = document.getElementById('paymentMethod').value;
-  
-  if (!customerName) {
-    showToast('Nama lengkap harus diisi!', 'error');
+
+  // VALIDASI
+  if (!customerName || !customerEmail || !customerPhone || !shippingAddress) {
+    showToast('Semua data wajib diisi!', 'error');
     return;
   }
-  if (!customerEmail) {
-    showToast('Email harus diisi!', 'error');
-    return;
-  }
-  if (!customerPhone) {
-    showToast('No. Telepon harus diisi!', 'error');
-    return;
-  }
-  if (!shippingAddress) {
-    showToast('Alamat pengiriman harus diisi!', 'error');
-    return;
-  }
-  
+
   const totalAmount = selectedProduct.price * orderQty;
-  
-  // Data pesanan
-  const orderData = {
+
+  // FORMAT DATA SESUAI API
+  const payload = {
     product_id: selectedProduct.id,
-    product_name: selectedProduct.name,
-    variant: selectedVariant.color,
-    quantity: orderQty,
-    price: selectedProduct.price,
-    total_amount: totalAmount,
+    product_name: `${selectedProduct.name} (${selectedVariant?.color || '-'})`,
     customer_name: customerName,
     customer_email: customerEmail,
     customer_phone: customerPhone,
     shipping_address: shippingAddress,
-    payment_method: paymentMethod,
-    order_date: new Date().toISOString(),
-    status: 'pending'
+    amount: totalAmount,
+    payment_method: paymentMethod.toLowerCase(),
   };
-  
-  // Disable button dan tampilkan loading
-  const submitBtn = document.getElementById('submitBtn');
-  const originalText = submitBtn.innerHTML;
-  submitBtn.innerHTML = '<span class="loading"></span> Memproses...';
-  submitBtn.disabled = true;
-  
+
+  const btn = document.getElementById('submitBtn');
+  const originalText = btn.innerHTML;
+
+  btn.innerHTML = '<span class="loading"></span> Memproses...';
+  btn.disabled = true;
+
   try {
-    // Kirim ke admin panel
-    const response = await fetch(`${API_URL}/api/create-transaction`, {
-      method: 'POST',
+    const res = await fetch(`${API_URL}/api/create-transaction`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(orderData)
+      body: JSON.stringify(payload)
     });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      showToast('✅ Pesanan berhasil dikirim ke Admin!', 'success');
-      closeModal();
-      
-      // Reset dan kembali ke list
-      backToList();
-      
-      // Tampilkan ringkasan order
-      alert(
-        '🎉 PESANAN BERHASIL!\n\n' +
-        `Order ID: ${result.transaction?.order_id || 'pending'}\n` +
-        `Tracking Code: ${result.transaction?.tracking_code || '-'}\n\n` +
-        `Total: Rp ${totalAmount.toLocaleString()}\n\n` +
-        `Silakan transfer sesuai metode pembayaran yang dipilih.\n` +
-        `Admin akan mengonfirmasi pesanan Anda segera.`
-      );
-    } else {
-      showToast('Gagal: ' + (result.error || 'Terjadi kesalahan'), 'error');
+
+    // HANDLE ERROR HTTP
+    if (!res.ok) {
+      throw new Error("Server tidak merespon dengan benar");
     }
-  } catch (error) {
-    console.error('Error submitting order:', error);
-    showToast('❌ Gagal mengirim pesanan. Coba lagi nanti.', 'error');
-  } finally {
-    submitBtn.innerHTML = originalText;
-    submitBtn.disabled = false;
+
+    const data = await res.json();
+
+    if (data.success) {
+
+      // 🔊 AUDIO NOTIF (dashboard sync)
+      new Audio("https://actions.google.com/sounds/v1/cart/checkout_complete.ogg").play();
+
+      showToast("✅ Transaksi berhasil!", "success");
+
+      closeModal();
+      backToList();
+
+      // POPUP DETAIL
+      alert(
+        "🎉 PESANAN BERHASIL!\n\n" +
+        "Order ID: " + data.transaction.order_id +
+        "\nTracking: " + data.transaction.tracking_code +
+        "\nTotal: Rp " + data.transaction.amount.toLocaleString() +
+        "\n\nStatus: PENDING\nSilakan lakukan pembayaran."
+      );
+
+      // AUTO REDIRECT TRACKING
+      window.open("track.html?code=" + data.transaction.tracking_code, "_blank");
+
+    } else {
+      showToast("❌ " + data.error, "error");
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast("❌ Server error / API tidak aktif", "error");
   }
+
+  btn.innerHTML = originalText;
+  btn.disabled = false;
 }
 
 // Tutup modal jika klik di luar
