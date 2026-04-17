@@ -93,6 +93,12 @@ header {
   width:100%;
   margin-top:10px;
   cursor:pointer;
+  border-radius:5px;
+  font-weight:bold;
+}
+
+.btn-green {
+  background:#42b549;
 }
 
 /* QTY */
@@ -101,8 +107,83 @@ header {
   gap:10px;
   align-items:center;
 }
-.qty button { width:30px }
+.qty button { width:30px; cursor:pointer; }
 
+/* MODAL FORM */
+.modal {
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  z-index:1000;
+  justify-content:center;
+  align-items:center;
+}
+.modal-content {
+  background:#fff;
+  width:90%;
+  max-width:500px;
+  border-radius:10px;
+  padding:20px;
+  max-height:90%;
+  overflow-y:auto;
+}
+.modal-content h3 {
+  margin-top:0;
+  color:#333;
+}
+.modal-content label {
+  display:block;
+  margin:10px 0 5px;
+  font-weight:bold;
+}
+.modal-content input, .modal-content select, .modal-content textarea {
+  width:100%;
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:5px;
+  box-sizing:border-box;
+}
+.modal-content textarea {
+  resize:vertical;
+}
+.bank-details {
+  background:#f0f0f0;
+  padding:10px;
+  border-radius:5px;
+  margin:10px 0;
+  font-size:14px;
+}
+.total-price {
+  font-size:20px;
+  font-weight:bold;
+  color:#ee4d2d;
+  margin:15px 0;
+  text-align:center;
+}
+.btn-checkout {
+  background:#42b549;
+  color:#fff;
+  padding:12px;
+  border:none;
+  width:100%;
+  border-radius:5px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.btn-checkout:hover {
+  background:#368f3d;
+}
+.close-modal {
+  float:right;
+  font-size:24px;
+  cursor:pointer;
+  color:#999;
+}
 </style>
 </head>
 
@@ -119,8 +200,44 @@ header {
 <!-- DETAIL -->
 <div id="detailPage" class="detail"></div>
 
+<!-- MODAL FORM CHECKOUT -->
+<div id="checkoutModal" class="modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+    <h3>📋 Form Pemesanan</h3>
+    
+    <label>👤 Nama Lengkap:</label>
+    <input type="text" id="customerName" required placeholder="Masukkan nama lengkap Anda">
+    
+    <label>📧 Email:</label>
+    <input type="email" id="customerEmail" required placeholder="contoh@email.com">
+    
+    <label>📞 No. Telepon:</label>
+    <input type="tel" id="customerPhone" required placeholder="0812xxxxxx">
+    
+    <label>🏠 Alamat Pengiriman:</label>
+    <textarea id="shippingAddress" required rows="3" placeholder="Jl. Contoh No. 123, RT/RW, Kelurahan, Kecamatan, Kota, Kode Pos"></textarea>
+    
+    <label>🏦 Metode Pembayaran:</label>
+    <select id="paymentMethod" onchange="updateBankDetails()">
+      <option value="BCA">🏦 BCA - Transfer Bank</option>
+      <option value="Mandiri">🏦 Mandiri - Transfer Bank</option>
+      <option value="BRI">🏦 BRI - Transfer Bank</option>
+    </select>
+    
+    <div id="bankDetails" class="bank-details"></div>
+    
+    <div class="total-price">
+      💰 Total: Rp <span id="totalAmount">0</span>
+    </div>
+    
+    <button type="button" class="btn-checkout" onclick="sendToWhatsApp()">✅ Kirim ke WhatsApp</button>
+  </div>
+</div>
+
 <script>
 const API = "https://raw.githubusercontent.com/namecheapel-boop/frontend-akses/main/data/products.json";
+const NOMOR_ADMIN = "6281234567890"; // GANTI DENGAN NOMOR WHATSAPP ADMIN
 
 let products = [];
 let selected = null;
@@ -161,7 +278,7 @@ function openDetail(id){
   el.style.display="block";
 
   el.innerHTML = `
-    <button onclick="back()">← Kembali</button>
+    <button onclick="back()" style="margin-bottom:10px; cursor:pointer;">← Kembali</button>
 
     <div class="detail-container">
 
@@ -176,144 +293,203 @@ function openDetail(id){
 
       <div style="flex:1">
         <h2>${selected.name}</h2>
-        <h3>Rp ${selected.price.toLocaleString()}</h3>
+        <h3 style="color:#ee4d2d">Rp ${selected.price.toLocaleString()}</h3>
 
-        <p>${selected.description}</p>
+        <p>${selected.description || "Helm berkualitas tinggi dengan desain modern dan nyaman digunakan."}</p>
 
-        <h4>Warna</h4>
-        ${selected.variants.map(v=>`
-          <span class="variant" onclick="selectVariant('${v.color}','${v.image}')">${v.color}</span>
+        <h4>🎨 Pilih Warna</h4>
+        ${selected.variants.map((v,idx)=>`
+          <span class="variant ${idx===0?'active':''}" onclick="selectVariant('${v.color}','${v.image}', this)">${v.color}</span>
         `).join('')}
 
-        <h4>Jumlah</h4>
+        <h4>🔢 Jumlah</h4>
         <div class="qty">
-          <button onclick="qty-- ; updateQty()">-</button>
-          <span id="qty">${qty}</span>
-          <button onclick="qty++ ; updateQty()">+</button>
+          <button onclick="changeQty(-1)">-</button>
+          <span id="qtyDisplay">${qty}</span>
+          <button onclick="changeQty(1)">+</button>
         </div>
 
-        <h3>Total: Rp <span id="total">${selected.price}</span></h3>
+        <h3>💰 Total: Rp <span id="totalDisplay">${selected.price.toLocaleString()}</span></h3>
 
         <button class="btn" onclick="addCart()">+ Keranjang</button>
-        <button class="btn" style="background:#42b549" onclick="checkout()">⚡ Beli Sekarang</button>
+        <button class="btn btn-green" onclick="openCheckoutModal()">🛒 Beli Sekarang</button>
       </div>
 
     </div>
   `;
 }
 
-// IMAGE CHANGE
 function changeImg(src){
   document.getElementById("mainImg").src = src;
 }
 
-// VARIANT
-function selectVariant(color, img){
+function selectVariant(color, img, element){
   selectedVariant = {color, image:img};
   changeImg(img);
-
   document.querySelectorAll(".variant").forEach(v=>v.classList.remove("active"));
-  event.target.classList.add("active");
+  element.classList.add("active");
+  updateTotalDisplay();
 }
 
-// QTY
-function updateQty(){
-  if(qty<1) qty=1;
-  document.getElementById("qty").innerText = qty;
-  document.getElementById("total").innerText = (selected.price*qty).toLocaleString();
+function changeQty(delta){
+  let newQty = qty + delta;
+  if(newQty >= 1){
+    qty = newQty;
+    updateTotalDisplay();
+  }
 }
 
-// CART
-function addCart(){
-  const nomorWA = "6281234567890"; // 🔥 GANTI NOMOR KAMU
-
-  const pesan = `
-Halo admin, saya ingin order:
-
-Produk: ${selected.name}
-Varian: ${selectedVariant?.color || '-'}
-Jumlah: ${qty}
-Total: Rp ${(selected.price * qty).toLocaleString()}
-
-Mohon info ketersediaan 🙏
-  `;
-
-  const url = `https://wa.me/${nomorWA}?text=${encodeURIComponent(pesan)}`;
-
-  window.open(url, '_blank');
+function updateTotalDisplay(){
+  document.getElementById("qtyDisplay").innerText = qty;
+  const total = selected.price * qty;
+  document.getElementById("totalDisplay").innerText = total.toLocaleString();
 }
 
-// COUNT
+function back(){
+  document.getElementById("detailPage").style.display="none";
+  document.getElementById("listPage").style.display="grid";
+}
+
 function updateCartCount(){
   let cart = JSON.parse(localStorage.getItem("cart")||"[]");
   document.getElementById("cartCount").innerText = cart.length;
 }
 updateCartCount();
 
-// CHECKOUT
-async function checkout(){
+function addCart(){
+  alert("✅ Ditambahkan ke keranjang!");
+  let cart = JSON.parse(localStorage.getItem("cart")||"[]");
+  cart.push({
+    id: selected.id,
+    name: selected.name,
+    variant: selectedVariant?.color,
+    price: selected.price,
+    qty: qty
+  });
+  localStorage.setItem("cart", JSON.stringify(cart));
+  updateCartCount();
+}
+
+function openCart(){
+  let cart = JSON.parse(localStorage.getItem("cart")||"[]");
+  if(cart.length===0){
+    alert("Keranjang kosong");
+    return;
+  }
+  let msg = "🛒 *KERANJANG BELANJA*\n\n";
+  let total = 0;
+  cart.forEach((item,idx)=>{
+    let subtotal = item.price * item.qty;
+    total += subtotal;
+    msg += `${idx+1}. ${item.name} - ${item.variant}\n   ${item.qty} x Rp ${item.price.toLocaleString()} = Rp ${subtotal.toLocaleString()}\n\n`;
+  });
+  msg += `*TOTAL: Rp ${total.toLocaleString()}*`;
+  alert(msg);
+}
+
+// ========== MODAL CHECKOUT ==========
+function openCheckoutModal(){
   if(!selected){
-    alert("Pilih produk dulu");
+    alert("Pilih produk terlebih dahulu!");
     return;
   }
+  
+  // Reset form
+  document.getElementById("customerName").value = "";
+  document.getElementById("customerEmail").value = "";
+  document.getElementById("customerPhone").value = "";
+  document.getElementById("shippingAddress").value = "";
+  
+  // Update total
+  const total = selected.price * qty;
+  document.getElementById("totalAmount").innerText = total.toLocaleString();
+  
+  // Tampilkan bank details default
+  updateBankDetails();
+  
+  // Tampilkan modal
+  document.getElementById("checkoutModal").style.display = "flex";
+}
 
-  const customer_name = prompt("Masukkan Nama:");
-  const shipping_address = prompt("Masukkan Alamat:");
+function closeModal(){
+  document.getElementById("checkoutModal").style.display = "none";
+}
 
-  if(!customer_name || !shipping_address){
-    alert("Data wajib diisi!");
+function updateBankDetails(){
+  const method = document.getElementById("paymentMethod").value;
+  let details = "";
+  if(method === "BCA"){
+    details = "🏦 *Bank BCA*\nNo. Rekening: 1234567890\nAtas Nama: Helm Market Pro";
+  } else if(method === "Mandiri"){
+    details = "🏦 *Bank Mandiri*\nNo. Rekening: 0987654321\nAtas Nama: Helm Market Pro";
+  } else if(method === "BRI"){
+    details = "🏦 *Bank BRI*\nNo. Rekening: 1122334455\nAtas Nama: Helm Market Pro";
+  }
+  document.getElementById("bankDetails").innerHTML = details.replace(/\n/g, "<br>");
+}
+
+function sendToWhatsApp(){
+  // Validasi form
+  const name = document.getElementById("customerName").value.trim();
+  const email = document.getElementById("customerEmail").value.trim();
+  const phone = document.getElementById("customerPhone").value.trim();
+  const address = document.getElementById("shippingAddress").value.trim();
+  const paymentMethod = document.getElementById("paymentMethod").value;
+  
+  if(!name){
+    alert("❌ Nama lengkap harus diisi!");
     return;
   }
+  if(!email){
+    alert("❌ Email harus diisi!");
+    return;
+  }
+  if(!phone){
+    alert("❌ No. Telepon harus diisi!");
+    return;
+  }
+  if(!address){
+    alert("❌ Alamat pengiriman harus diisi!");
+    return;
+  }
+  
+  const total = selected.price * qty;
+  
+  // Format pesan WhatsApp
+  let pesan = `*🛍️ ORDER BARU - HELM MARKET PRO*\n\n`;
+  pesan += `*DATA PELANGGAN*\n`;
+  pesan += `👤 Nama: ${name}\n`;
+  pesan += `📧 Email: ${email}\n`;
+  pesan += `📞 Telepon: ${phone}\n`;
+  pesan += `🏠 Alamat: ${address}\n\n`;
+  pesan += `*DETAIL PESANAN*\n`;
+  pesan += `📦 Produk: ${selected.name}\n`;
+  pesan += `🎨 Warna: ${selectedVariant?.color || '-'}\n`;
+  pesan += `🔢 Jumlah: ${qty}\n`;
+  pesan += `💰 Total: Rp ${total.toLocaleString()}\n\n`;
+  pesan += `*PEMBAYARAN*\n`;
+  pesan += `🏦 Metode: ${paymentMethod} - Transfer Bank\n\n`;
+  pesan += `📌 *Mohon konfirmasi pembayaran setelah transfer.*\n`;
+  pesan += `Terima kasih! 🙏`;
+  
+  // Kirim ke WhatsApp
+  const url = `https://wa.me/${NOMOR_ADMIN}?text=${encodeURIComponent(pesan)}`;
+  window.open(url, '_blank');
+  
+  // Tutup modal
+  closeModal();
+  
+  // Optional: reset form dan kembali ke halaman utama
+  alert("✅ Pesanan akan dikirim ke admin via WhatsApp. Silakan lanjutkan pembayaran.");
+}
 
-  const totalAmount = selected.price * qty;
-
-  const payload = {
-    product_id: selected.id,
-    product_name: selected.name + " - " + (selectedVariant?.color || ''),
-    customer_name: customer_name,
-    shipping_address: shipping_address,
-    amount: totalAmount,
-    payment_method: "bank_transfer"
-  };
-
-  try{
-    const res = await fetch("https://payment-worker.namecheapel.workers.dev/api/create-transaction", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-
-    if(data.success){
-      alert(
-        "✅ Transaksi berhasil!\n\n" +
-        "Order ID: " + data.transaction.order_id +
-        "\nTracking: " + data.transaction.tracking_code +
-        "\nTotal: Rp " + data.transaction.amount
-      );
-
-      // buka halaman tracking
-      window.open("track.html?code=" + data.transaction.tracking_code);
-
-    } else {
-      alert("❌ Gagal: " + data.error);
-    }
-
-  } catch(err){
-    console.error(err);
-    alert("❌ Server error");
+// Tutup modal jika klik di luar
+window.onclick = function(event) {
+  const modal = document.getElementById("checkoutModal");
+  if (event.target === modal) {
+    closeModal();
   }
 }
-
-// BACK
-function back(){
-  document.getElementById("detailPage").style.display="none";
-  document.getElementById("listPage").style.display="grid";
-}
-
 </script>
 
 </body>
