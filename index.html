@@ -225,19 +225,22 @@ function updateQty(){
 
 // CART
 function addCart(){
-  let cart = JSON.parse(localStorage.getItem("cart")||"[]");
+  const nomorWA = "6281234567890"; // 🔥 GANTI NOMOR KAMU
 
-  cart.push({
-    id:selected.id,
-    name:selected.name,
-    price:selected.price,
-    qty,
-    variant:selectedVariant
-  });
+  const pesan = `
+Halo admin, saya ingin order:
 
-  localStorage.setItem("cart", JSON.stringify(cart));
-  updateCartCount();
-  alert("Masuk keranjang!");
+Produk: ${selected.name}
+Varian: ${selectedVariant?.color || '-'}
+Jumlah: ${qty}
+Total: Rp ${(selected.price * qty).toLocaleString()}
+
+Mohon info ketersediaan 🙏
+  `;
+
+  const url = `https://wa.me/${nomorWA}?text=${encodeURIComponent(pesan)}`;
+
+  window.open(url, '_blank');
 }
 
 // COUNT
@@ -248,8 +251,61 @@ function updateCartCount(){
 updateCartCount();
 
 // CHECKOUT
-function checkout(){
-  alert("🚀 Integrasi ke API kamu di sini");
+async function checkout(){
+  if(!selected){
+    alert("Pilih produk dulu");
+    return;
+  }
+
+  const customer_name = prompt("Masukkan Nama:");
+  const shipping_address = prompt("Masukkan Alamat:");
+
+  if(!customer_name || !shipping_address){
+    alert("Data wajib diisi!");
+    return;
+  }
+
+  const totalAmount = selected.price * qty;
+
+  const payload = {
+    product_id: selected.id,
+    product_name: selected.name + " - " + (selectedVariant?.color || ''),
+    customer_name: customer_name,
+    shipping_address: shipping_address,
+    amount: totalAmount,
+    payment_method: "bank_transfer"
+  };
+
+  try{
+    const res = await fetch("https://payment-worker.namecheapel.workers.dev/api/create-transaction", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+      alert(
+        "✅ Transaksi berhasil!\n\n" +
+        "Order ID: " + data.transaction.order_id +
+        "\nTracking: " + data.transaction.tracking_code +
+        "\nTotal: Rp " + data.transaction.amount
+      );
+
+      // buka halaman tracking
+      window.open("track.html?code=" + data.transaction.tracking_code);
+
+    } else {
+      alert("❌ Gagal: " + data.error);
+    }
+
+  } catch(err){
+    console.error(err);
+    alert("❌ Server error");
+  }
 }
 
 // BACK
