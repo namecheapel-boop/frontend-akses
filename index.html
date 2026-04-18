@@ -420,6 +420,176 @@ header h2 {
     opacity: 1;
   }
 }
+  /* =========================
+   MOBILE RESPONSIVE FIX
+========================= */
+@media (max-width: 768px) {
+
+  header {
+    padding: 12px 15px;
+  }
+
+  header h2 {
+    font-size: 1.2rem;
+  }
+
+  .cart-icon {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  /* PRODUCT GRID */
+  .products {
+    grid-template-columns: 1fr;
+    padding: 15px;
+    gap: 15px;
+  }
+
+  /* CARD */
+  .card img {
+    height: 180px;
+  }
+
+  .card-info h3 {
+    font-size: 0.95rem;
+  }
+
+  .card-info .price {
+    font-size: 1.1rem;
+  }
+
+  /* DETAIL PAGE */
+  .detail {
+    padding: 15px;
+  }
+
+  .detail-container {
+    flex-direction: column;
+    padding: 15px;
+    gap: 20px;
+  }
+
+  .main-img {
+    height: 250px;
+  }
+
+  .thumb img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .detail-info h2 {
+    font-size: 1.3rem;
+  }
+
+  .detail-info .price {
+    font-size: 1.4rem;
+  }
+
+  .description {
+    font-size: 14px;
+  }
+
+  .variant {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  /* QTY */
+  .qty-control {
+    gap: 10px;
+  }
+
+  .qty-control button {
+    width: 30px;
+    height: 30px;
+  }
+
+  .qty-control span {
+    font-size: 16px;
+  }
+
+  /* BUTTON */
+  .btn {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .total-price {
+    font-size: 1.2rem;
+  }
+
+  /* MODAL */
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+    border-radius: 15px;
+  }
+
+  .modal-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .total-order span {
+    font-size: 20px;
+  }
+
+  .btn-submit {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  /* TOAST */
+  .toast {
+    bottom: 15px;
+    right: 15px;
+    font-size: 13px;
+    padding: 12px 18px;
+  }
+}
+
+
+/* EXTRA SMALL DEVICE */
+@media (max-width: 480px) {
+
+  header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cart-icon {
+    width: 100%;
+    text-align: center;
+  }
+
+  .main-img {
+    height: 200px;
+  }
+
+  .thumb {
+    justify-content: center;
+  }
+
+  .variant-group {
+    justify-content: center;
+  }
+
+  .detail-info {
+    text-align: center;
+  }
+
+  .qty-control {
+    justify-content: center;
+  }
+
+}
 </style>
 </head>
 
